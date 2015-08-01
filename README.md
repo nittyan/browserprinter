@@ -16,7 +16,7 @@ pip install selenium
 pip install requests
 ```
 
-conf.py
+Configure __init__ parameter conf 
 --------------------
 top_page  
 リンクをたどるトップページ。このページからリンクをたどれるページのスクリーンショットを取得します。
