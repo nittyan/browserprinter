@@ -5,7 +5,6 @@ import requests
 import selenium.webdriver as webdriver
 from urllib.parse import urlparse
 import os
-import conf
 
 
 class BrowserPrinter(object):
@@ -15,7 +14,7 @@ class BrowserPrinter(object):
         self._make_dest_dir()
 
     def _make_dest_dir(self):
-        if (not os.path.exists(self.conf.dest_dir)):
+        if not os.path.exists(self.conf.dest_dir):
             os.mkdir(self.conf.dest_dir)
 
     def execute(self):
@@ -32,7 +31,7 @@ class BrowserPrinter(object):
         return links
 
     def do_crawl(self, link, links):
-        return (self.conf.contains_include(link) and not self.conf.contains_exclude(link) and not self.did_crawl(link, links))
+        return self.conf.contains_include(link) and not self.conf.contains_exclude(link) and not self.did_crawl(link, links)
 
     def did_crawl(self, link, links):
         return link in links
@@ -73,11 +72,11 @@ class Configure(object):
 
     def __init__(self, conf):
         self.conf = conf
-        self.driver_name = self.conf.driver
-        self.top = self.conf.top_page
-        self.dest_dir = self.conf.dest_dir
-        self.includes = self.conf.includes
-        self.excludes = self.conf.excludes
+        self.driver_name = self.conf['driver']
+        self.top = self.conf['top_page']
+        self.dest_dir = self.conf['dest_dir']
+        self.includes = self.conf['includes']
+        self.excludes = self.conf['excludes']
 
     def contains_include(self, url):
         if url is None:
@@ -94,8 +93,3 @@ class Configure(object):
 
         return False
 
-
-if __name__ == '__main__':
-    configure = Configure(conf)
-    printer = BrowserPrinter(configure)
-    printer.execute()
