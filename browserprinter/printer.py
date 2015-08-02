@@ -22,9 +22,8 @@ class BrowserPrinter(object):
         self.get_screenshots(urls)
 
     def crawl(self, top, links=[]):
-        a_tags = self.parse_html(top)
-        for a_tag in a_tags:
-            link = a_tag.get('href')
+        hrefs = self.find_link(top)
+        for link in hrefs:
             if self.do_crawl(link, links):
                 links.append(link)
                 self.crawl(link, links)
@@ -36,12 +35,14 @@ class BrowserPrinter(object):
     def did_crawl(self, link, links):
         return link in links
 
-    def parse_html(self, url):
-        request = requests.get(url)
+    def find_link(self, url):
+        html = self.get_html(url)
         print('parsing {0}'.format(url))
-        soup = BeautifulSoup(request.text, 'html.parser')
+        soup = BeautifulSoup(html, 'html.parser')
+        return list(map(lambda o: o.get('href'), soup.find_all('a')))
 
-        return soup.find_all('a')
+    def get_html(self, url):
+        return requests.get(url).text
 
     def get_screenshots(self, urls):
         browser = self.get_driver()
@@ -90,6 +91,5 @@ class Configure(object):
         for ex in self.excludes:
             if url.startswith(ex):
                 return True
-
         return False
 
