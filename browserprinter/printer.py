@@ -69,6 +69,49 @@ class BrowserPrinter(object):
             raise "Invalid driver"
 
 
+class Link(object):
+
+    def __init__(self, url):
+        self.url = url
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+        if not isinstance(other, Link):
+            return False
+
+        return self.url == other.url
+
+    def is_valid(self):
+        if self.url is None or '' is self.url:
+            return False
+
+        parsed = urlparse(self.url)
+        if 'http' != parsed.scheme and 'https' != parsed.scheme:
+            return False
+        if '' == parsed.netloc:
+            return False
+        if '' != parsed.fragment:
+            return False
+
+        return True
+
+    def do_crawl(self, includes, excludes):
+        if self._is_includes(includes) and not self._is_excludes(excludes):
+            return True
+        return False
+
+    def _is_includes(self, includes):
+        parsed = urlparse(self.url)
+        return parsed.scheme + '://' + parsed.netloc in includes
+
+    def _is_excludes(self, excludes):
+        for ex in excludes:
+            if self.url.startswith(ex):
+                return True
+        return False
+
+
 class Configure(object):
 
     def __init__(self, conf):
