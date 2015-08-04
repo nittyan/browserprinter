@@ -21,6 +21,7 @@ setup(
     keywords='screenshot browser crawl',
     packages=find_packages(exclude=['docs', 'tests']),
     extras_require={
-        'dev': ['beautifulsoup4', 'selenium', 'requests']
+        'dev': ['beautifulsoup4', 'selenium', 'requests'],
+        'test': ['nose']
     }
 )
