@@ -18,37 +18,64 @@ class BrowserPrinter(object):
             os.mkdir(self.conf.dest_dir)
 
     def execute(self):
-        urls = self.crawl(self.conf.top, [self.conf.top])
+        top = Link(self.conf.top)
+        urls = self.crawl(top, [top])
         self.get_screenshots(urls)
 
-    def crawl(self, top, links=[]):
+    def crawl(self, top, targets=[]):
+        """
+        Args:
+            top: Link
+            crawled: list<Link>
+
+        Returns:
+          list<Link>
+        """
         hrefs = self.find_link(top)
         for link in hrefs:
-            if self.do_crawl(link, links):
-                links.append(link)
-                self.crawl(link, links)
-        return links
+            if link.do_crawl(self.conf.includes, self.conf.excludes) and link not in targets:
+                targets.append(link)
+                self.crawl(link, targets)
 
-    def do_crawl(self, link, links):
-        return self.conf.contains_include(link) and not self.conf.contains_exclude(link) and not self.did_crawl(link, links)
+        return targets
 
-    def did_crawl(self, link, links):
-        return link in links
+    def find_link(self, target):
+        """
+        Args:
+            url: Link
 
-    def find_link(self, url):
-        html = self.get_html(url)
-        print('parsing {0}'.format(url))
+        Returns:
+            list<Link>
+        """
+        html = self.get_html(target)
+        print('parsing {0}'.format(target.url))
         soup = BeautifulSoup(html, 'html.parser')
-        return list(map(lambda o: o.get('href'), soup.find_all('a')))
 
-    def get_html(self, url):
-        return requests.get(url).text
+        results = []
+        for l in soup.find_all('a'):
+            link = Link(l.get('href'))
+            if link.is_valid():
+                results.append(link)
+        return results
 
-    def get_screenshots(self, urls):
+    def get_html(self, link):
+        """
+        Args:
+            link: Link
+        Returns:
+            str
+        """
+        return requests.get(link.url).text
+
+    def get_screenshots(self, links):
+        """
+        Args:
+            links: list<Link>
+        """
         browser = self.get_driver()
         counter = 1
-        for url in urls:
-            browser.get(url)
+        for link in links:
+            browser.get(link.url)
             browser.save_screenshot(self._create_file_path(str(counter)))
             counter += 1
         browser.quit()
@@ -111,6 +138,9 @@ class Link(object):
                 return True
         return False
 
+    def __repr__(self):
+        return '<Link(url:{0})>'.format(self.url)
+
 
 class Configure(object):
 
@@ -121,18 +151,4 @@ class Configure(object):
         self.dest_dir = self.conf['dest_dir']
         self.includes = self.conf['includes']
         self.excludes = self.conf['excludes']
-
-    def contains_include(self, url):
-        if url is None:
-            return False
-        parsed = urlparse(url)
-        return parsed.scheme + "://" + parsed.netloc in self.includes
-
-    def contains_exclude(self, url):
-        if url is None:
-            return False
-        for ex in self.excludes:
-            if url.startswith(ex):
-                return True
-        return False
 
